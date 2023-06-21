@@ -1,3 +1,5 @@
+import scala.annotation.tailrec
+
 abstract class MyStream[+A] {
   def isEmpty: Boolean
 
@@ -20,6 +22,10 @@ abstract class MyStream[+A] {
   def take(n: Int): MyStream[A]
 
   def takeAsList(n: Int): List[A]
+
+  @tailrec
+  final def toList[B >: A](acc: List[B] = Nil): List[B] =
+    if (isEmpty) acc.reverse else tail.toList(head :: acc)
 }
 
 class EmptyStream extends MyStream[Nothing] {
@@ -86,6 +92,6 @@ object exercise extends App {
   val startFrom0 = 0 #:: naturals
   println(startFrom0.head)
   startFrom0.take(10000).foreach(println)
-  println(startFrom0.map(_ * 2).take(100))
-  println(startFrom0.flatMap(x => new Cons(x, new Cons(x + 1, new EmptyStream))).take(10))
+  println(startFrom0.map(_ * 2).take(100).toList())
+  println(startFrom0.flatMap(x => new Cons(x, new Cons(x + 1, new EmptyStream))).take(10).toList())
 }
