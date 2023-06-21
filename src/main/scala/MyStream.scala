@@ -9,7 +9,7 @@ abstract class MyStream[+A] {
 
   def #::[B >: A](elem: B): MyStream[B]
 
-  def ++[B >: A](another: MyStream[B]): MyStream[B]
+  def ++[B >: A](another: => MyStream[B]): MyStream[B]
 
   def foreach(f: A => Unit): Unit
 
@@ -37,7 +37,7 @@ class EmptyStream extends MyStream[Nothing] {
 
   override def #::[B >: Nothing](elem: B): MyStream[B] = new Cons[B](elem, this)
 
-  override def ++[B >: Nothing](another: MyStream[B]): MyStream[B] = another
+  override def ++[B >: Nothing](another: => MyStream[B]): MyStream[B] = another
 
   override def foreach(f: Nothing => Unit): Unit = ()
 
@@ -60,7 +60,7 @@ class Cons[A](hd: A, tl: => MyStream[A]) extends MyStream[A] {
 
   override def #::[B >: A](elem: B): MyStream[B] = new Cons(elem, this)
 
-  override def ++[B >: A](another: MyStream[B]): MyStream[B] = new Cons(head, tail ++ another)
+  override def ++[B >: A](another: => MyStream[B]): MyStream[B] = new Cons(head, tail ++ another)
 
   override def foreach(f: A => Unit): Unit = {
     f(head)
@@ -89,9 +89,21 @@ object exercise extends App {
   println(naturals.tail.head)
   println(naturals.tail.tail.head)
 
-  val startFrom0 = 0 #:: naturals
+  val startFrom0                                  = 0 #:: naturals
   println(startFrom0.head)
   startFrom0.take(10000).foreach(println)
   println(startFrom0.map(_ * 2).take(100).toList())
   println(startFrom0.flatMap(x => new Cons(x, new Cons(x + 1, new EmptyStream))).take(10).toList())
+  println(startFrom0.filter(_ % 2 == 0).take(10).take(20).toList())
+
+  //fib numbers
+  def fib(first: Int, second: Int): MyStream[Int] = new Cons(first, fib(second, first + second))
+
+  println(fib(1, 1).take(1000).toList())
+
+  // eratosthenes sieve (get primes)
+  def eratosthenes(numbers: MyStream[Int]): MyStream[Int] =
+    if (numbers.isEmpty) numbers else new Cons(numbers.head, numbers.tail.filter(_ % numbers.head != 0))
+
+  println(eratosthenes(MyStream.from(2)(_ + 1).take(200)).toList())
 }
